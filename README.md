@@ -1,6 +1,13 @@
 # machine-krb
 
 [![CI](https://github.com/techneut92/machine-krb/actions/workflows/ci.yml/badge.svg)](https://github.com/techneut92/machine-krb/actions/workflows/ci.yml)
+[![crates.io](https://img.shields.io/crates/v/machine-krb?logo=rust&color=brightgreen)](https://crates.io/crates/machine-krb)
+[![docs.rs](https://img.shields.io/docsrs/machine-krb?logo=docs.rs)](https://docs.rs/machine-krb)
+[![MSRV](https://img.shields.io/crates/msrv/machine-krb?label=msrv)](crates/machine-krb/Cargo.toml)
+[![Release](https://img.shields.io/github/v/release/techneut92/machine-krb?label=release&color=brightgreen)](https://github.com/techneut92/machine-krb/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/techneut92/machine-krb/total?label=downloads&color=blue)](https://github.com/techneut92/machine-krb/releases)
+[![License](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/techneut92)
 
 Keep an **Active Directory machine-account Kerberos ticket** fresh on a Linux
 host, and verify the host is *properly* joined — using the system MIT krb5
