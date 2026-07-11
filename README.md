@@ -76,6 +76,17 @@ Full details in the crate READMEs:
   tools must exist on the host.
 - Rust ≥ 1.85 to build (floor set by `clap`; the library itself is lower).
 
+## Support
+
+If this project saves you some time, you can support its development:
+
+- **Ko-fi** — [ko-fi.com/techneut92](https://ko-fi.com/techneut92) (one-off tips, no account needed)
+- **Revolut** — [revolut.me/techneut92](https://revolut.me/techneut92)
+- **Ethereum (ETH)** — `0x15d9B8383A7cbe9f99F72aC29106C53bbcf4ea40` (Ethereum network; ETH / ERC-20 only)
+
+[![ko-fi](https://img.shields.io/badge/Support%20me%20on-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/techneut92)
+[![Revolut](https://img.shields.io/badge/Revolut-tip-0666EB?logo=revolut&logoColor=white)](https://revolut.me/techneut92)
+
 ## License
 
 Dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your
