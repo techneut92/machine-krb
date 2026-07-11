@@ -57,11 +57,18 @@ Or from packages — `make packages` (or the GitHub release assets) produces
 **.rpm, .deb and .apk from one fully-static musl binary**:
 
 ```bash
-sudo dnf install dist/machine-krb-service-*.rpm     # Fedora/RHEL
-sudo apt install ./dist/machine-krb-service_*.deb   # Debian/Ubuntu
-apk add --allow-untrusted dist/machine-krb-service_*.apk  # Alpine
+sudo dnf install ./machine-krb-service-*.rpm        # Fedora/RHEL
+sudo rpm-ostree install ./machine-krb-service-*.rpm # Fedora Atomic (Silverblue/Kinoite/Bazzite) — then reboot
+sudo apt install ./machine-krb-service_*.deb        # Debian/Ubuntu
+apk add --allow-untrusted machine-krb-service_*.apk # Alpine
 sudo systemctl enable --now machine-krb-service.timer     # (systemd distros)
 ```
+
+Then tune `/etc/machine-krb/config.yaml` to taste — the group that may read
+the ticket, the realm on multi-realm hosts, retry/escalation behavior. Changes
+apply on the next run (`sudo systemctl restart machine-krb-service`); upgrades
+never overwrite the file. All keys are documented in the
+[service README](crates/machine-krb-service/README.md#configuration).
 
 Full details in the crate READMEs:
 - **Library API** → [`crates/machine-krb/README.md`](crates/machine-krb/README.md)
