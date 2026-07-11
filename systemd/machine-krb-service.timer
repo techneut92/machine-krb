@@ -1,0 +1,18 @@
+# Hourly + at-boot refresh of the AD machine Kerberos ticket.
+#
+# Persistent= only works with OnCalendar= (systemd.timer(5)) — pairing it
+# with OnUnitActiveSec is a silent no-op, hence OnCalendar=hourly here.
+# OnBootSec covers the boot run (/run is tmpfs, the ccache starts absent);
+# Persistent=true replays a calendar run missed while powered off.
+[Unit]
+Description=Hourly refresh of the AD machine Kerberos ticket
+
+[Timer]
+OnBootSec=2min
+OnCalendar=hourly
+RandomizedDelaySec=2min
+FixedRandomDelay=true
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,26 @@
+[workspace]
+resolver = "3"
+members = ["crates/machine-krb", "crates/machine-krb-service"]
+
+[workspace.package]
+# Crates version independently (lib API stability != service release cadence);
+# each crate declares its own `version`.
+edition = "2024"
+# Floor set by clap 4.6 (1.85) — every other dependency is lower
+# (serde 1.56, anyhow/thiserror 1.68, serde_json 1.71). Verified 2026-07-11.
+rust-version = "1.85"
+license = "MIT OR Apache-2.0"
+authors = ["Dylan Westra <dylanwestra@gmail.com>"]
+repository = "https://github.com/techneut92/machine-krb"
+keywords = ["kerberos", "active-directory", "keytab", "krb5", "sssd"]
+categories = ["authentication", "os::linux-apis"]
+
+[workspace.dependencies]
+anyhow = "1.0.103"
+clap = { version = "4.6.1", features = ["derive"] }
+libc = "0.2.186"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.150"
+serde_yaml_ng = "0.10.0"
+thiserror = "2.0.18"
+machine-krb = { version = "0.1.0", path = "crates/machine-krb" }

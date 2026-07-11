@@ -1,0 +1,39 @@
+# machine-krb-service configuration.
+#
+# Every key is optional; an omitted key uses the built-in default shown here.
+# CLI flags (--keytab, --ccache, --group, --realm) override anything set here.
+
+keytab: /etc/krb5.keytab
+ccache: /run/machine-krb/armor.ccache
+
+# Group whose members may read the machine ticket (root:<group> 0640). The
+# installer creates 'machine-krb' and adds you to it. You may instead point
+# this at an existing, RESTRICTED group your org already manages (e.g. one for
+# your admin account) — membership of this group == the ability to authenticate
+# to AD as this computer, so keep it tight. Changing it and restarting the
+# service re-chowns the cache to the new group.
+group: machine-krb
+
+# On a host joined to more than one AD realm, pick which machine principal to
+# keep a ticket for (matches the realm part of NAME$@REALM, case-insensitive).
+# Leave commented to use the first machine principal in the keytab.
+# realm: EXAMPLE.COM
+
+# Per-run retry for transient failures (KDC unreachable / off VPN). This only
+# governs retries *within a single run*; long-term retry is the systemd timer's
+# job (hourly + on VPN-up) regardless of these values.
+#
+# Keep attempts x backoff_seconds well under the unit's TimeoutStartSec (3 min)
+# or a run gets killed by systemd instead of exiting cleanly. Values are
+# clamped (attempts <= 10, backoff_seconds <= 60).
+#
+# escalate_after: after this many CONSECUTIVE transient-failure runs, the
+# service reports the failure as permanent (exit 78 -> the unit shows failed)
+# so a real outage can't hide behind "transient" forever. The counter lives in
+# tmpfs (resets at boot) and clears on the first successful refresh.
+# 12 hourly runs ~= half a day. 0 disables escalation (e.g. laptops that stay
+# off the VPN for days at a time and don't want a red unit).
+retry:
+  attempts: 3
+  backoff_seconds: 10
+  escalate_after: 12

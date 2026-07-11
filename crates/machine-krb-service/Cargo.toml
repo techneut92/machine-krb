@@ -1,0 +1,26 @@
+[package]
+name = "machine-krb-service"
+description = "systemd service that keeps a Linux host's AD machine-account Kerberos ticket fresh (FAST-armor cache), built on the machine-krb crate"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+# Flip to publish when ready (`cargo publish -p machine-krb-service`).
+publish = false
+
+[[bin]]
+name = "machine-krb-service"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml_ng.workspace = true
+machine-krb = { workspace = true, features = ["serde"] }

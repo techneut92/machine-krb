@@ -1,0 +1,58 @@
+# Refresh the AD machine Kerberos ticket used as FAST armor for compound
+# authentication (RDP etc.). Fired by machine-krb-service.timer; safe to start
+# manually: systemctl start machine-krb-service.service
+[Unit]
+Description=Refresh the AD machine Kerberos ticket (FAST armor cache)
+Wants=network-online.target
+After=network-online.target nss-lookup.target
+ConditionPathExists=/etc/krb5.keytab
+
+[Service]
+Type=oneshot
+# oneshot has NO default start timeout — without this, one wedged run (hung
+# KDC connection) would block every future timer activation. Roomy enough for
+# the in-run retry loop (a few attempts with backoff).
+TimeoutStartSec=3min
+ExecStart=/usr/local/bin/machine-krb-service run
+# A transient failure (off VPN / KDC unreachable) exits 75 (EX_TEMPFAIL) — treat
+# it as success so the unit doesn't sit in "failed"; the timer just retries.
+# (The binary escalates to exit 78 after N consecutive transient runs, so a
+# real outage still surfaces as a failed unit.) Permanent failures (not
+# joined / revoked, exit 78) always show as failed.
+SuccessExitStatus=75
+# /run/machine-krb is created at boot by tmpfiles.d (machine-krb.tmpfiles.conf),
+# NOT via RuntimeDirectory= — systemd resets a RuntimeDirectory's ownership to
+# the unit's User=/Group= (root:root here) on every activation, which would
+# undo the config-driven group the binary sets and lock consumers out of a
+# still-valid ticket between runs. The '-' tolerates a missing dir (the binary
+# then recreates it — or fails loudly if /run is somehow read-only).
+ReadWritePaths=-/run/machine-krb
+UMask=0077
+
+# Hardening. The service needs: read /etc/krb5.keytab + /etc/krb5.conf(.d),
+# write /run/machine-krb (RuntimeDirectory self-exempts from ProtectSystem=strict),
+# network to the KDC (:88), and CAP_CHOWN for handing the ccache to the group.
+# AF_UNIX (nss-resolve varlink) and AF_NETLINK (glibc AI_ADDRCONFIG) are
+# required for name resolution — do not remove them.
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+NoNewPrivileges=yes
+CapabilityBoundingSet=CAP_CHOWN
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+SystemCallArchitectures=native

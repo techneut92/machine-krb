@@ -1,0 +1,28 @@
+[package]
+name = "machine-krb"
+description = "Manage an Active Directory machine-account Kerberos ticket (keytab renew/mint) and verify the AD join, on Linux, via the system MIT krb5 tools"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+# Published to crates.io by .github/workflows/publish.yml on lib-v* tags.
+
+[features]
+## Derive `serde::Serialize` on the public report types
+## (`JoinStatus`, `MachineIdentity`, `Freshness`).
+serde = ["dep:serde"]
+
+[dependencies]
+# libc is used only for the O_NOFOLLOW open flag (arch-dependent constant
+# std doesn't expose) — no unsafe code involved.
+libc.workspace = true
+thiserror.workspace = true
+serde = { workspace = true, optional = true }
+
+[package.metadata.docs.rs]
+all-features = true

@@ -1,0 +1,11 @@
+#!/bin/sh
+# NetworkManager dispatcher hook: refresh the armor ticket as soon as a
+# connection (notably the corporate VPN) comes up, instead of waiting for
+# the hourly timer. A failed attempt on a non-corp network is harmless —
+# the timer and the next network change retry.
+# Installed to /etc/NetworkManager/dispatcher.d/90-machine-krb-service by `make install`.
+case "$2" in
+    up | vpn-up)
+        systemctl start --no-block machine-krb-service.service
+        ;;
+esac

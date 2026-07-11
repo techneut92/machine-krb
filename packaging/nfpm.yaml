@@ -1,0 +1,87 @@
+# nfpm configuration — builds .rpm, .deb and .apk from the SAME static musl
+# binary (see `make packages`). Paths are relative to the repo root (nfpm is
+# invoked from there).
+#
+# Packages install to /usr/bin and /usr/lib (distro convention); the dev-box
+# `make install` uses /usr/local instead — the two never collide.
+name: machine-krb-service
+arch: amd64
+platform: linux
+version: "${VERSION}"
+section: admin
+priority: optional
+maintainer: Dylan Westra <dylanwestra@gmail.com>
+homepage: https://github.com/techneut92/machine-krb
+license: MIT OR Apache-2.0
+description: |
+  Keep an Active Directory machine-account Kerberos ticket fresh.
+  Renews (or mints from /etc/krb5.keytab) the machine TGT into
+  /run/machine-krb/armor.ccache so FAST armoring / compound
+  authentication consumers always find a valid, group-readable ticket.
+
+overrides:
+  rpm:
+    depends:
+      - krb5-workstation
+  deb:
+    depends:
+      - krb5-user
+  apk:
+    depends:
+      - krb5
+
+contents:
+  # the one static binary, same on every distro
+  - src: target/x86_64-unknown-linux-musl/release/machine-krb-service
+    dst: /usr/bin/machine-krb-service
+    file_info:
+      mode: 0755
+
+  # config — never overwritten on upgrade
+  - src: config/config.yaml
+    dst: /etc/machine-krb/config.yaml
+    type: config|noreplace
+    file_info:
+      mode: 0644
+
+  # systemd (rpm + deb): unit rewritten to /usr/bin by `make packages`
+  - src: target/pkg/machine-krb-service.service
+    dst: /usr/lib/systemd/system/machine-krb-service.service
+    packager: rpm
+  - src: target/pkg/machine-krb-service.service
+    dst: /usr/lib/systemd/system/machine-krb-service.service
+    packager: deb
+  - src: systemd/machine-krb-service.timer
+    dst: /usr/lib/systemd/system/machine-krb-service.timer
+    packager: rpm
+  - src: systemd/machine-krb-service.timer
+    dst: /usr/lib/systemd/system/machine-krb-service.timer
+    packager: deb
+  - src: systemd/machine-krb.tmpfiles.conf
+    dst: /usr/lib/tmpfiles.d/machine-krb.conf
+    packager: rpm
+  - src: systemd/machine-krb.tmpfiles.conf
+    dst: /usr/lib/tmpfiles.d/machine-krb.conf
+    packager: deb
+  - src: systemd/90-machine-krb-service
+    dst: /usr/lib/NetworkManager/dispatcher.d/90-machine-krb-service
+    packager: rpm
+    file_info:
+      mode: 0755
+  - src: systemd/90-machine-krb-service
+    dst: /usr/lib/NetworkManager/dispatcher.d/90-machine-krb-service
+    packager: deb
+    file_info:
+      mode: 0755
+
+  # Alpine has no systemd: busybox crond's /etc/periodic gives the hourly
+  # cadence, and the binary creates /run/machine-krb itself at first run.
+  - src: packaging/alpine-periodic-hourly
+    dst: /etc/periodic/hourly/machine-krb-service
+    packager: apk
+    file_info:
+      mode: 0755
+
+scripts:
+  postinstall: packaging/scripts/postinstall.sh
+  preremove: packaging/scripts/preremove.sh

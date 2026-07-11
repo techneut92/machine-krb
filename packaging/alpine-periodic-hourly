@@ -1,0 +1,5 @@
+#!/bin/sh
+# Hourly machine-ticket refresh for non-systemd (Alpine/OpenRC) systems,
+# executed by busybox crond via /etc/periodic/hourly. The binary creates
+# /run/machine-krb itself and applies the configured group.
+exec /usr/bin/machine-krb-service run
