@@ -1,3 +1,9 @@
+machine-krb-service (0.1.2-1) unstable; urgency=medium
+
+  * aarch64 and Arch Linux packages in GitHub releases; no functional changes.
+
+ -- Dylan Westra <dylanwestra@gmail.com>  Sun, 12 Jul 2026 14:41:06 +0200
+
 machine-krb-service (0.1.1-1) unstable; urgency=medium
 
   * Distro packaging and automated publishing (COPR, OBS);
