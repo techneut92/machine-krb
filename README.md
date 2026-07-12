@@ -68,6 +68,23 @@ sudo systemctl enable --now machine-krb-service.timer
 to `/etc/yum.repos.d/` and `rpm-ostree install machine-krb-service` — the COPR
 page has copy-paste instructions.)
 
+On Debian / Ubuntu use the
+[OBS repo](https://build.opensuse.org/project/show/home:Techneut92:machine-krb)
+— Debian 13/Testing/Unstable and Ubuntu 24.04+, x86_64 + aarch64 (pick your
+`$distro`: `Debian_13`, `Debian_Testing`, `Debian_Unstable`, `xUbuntu_24.04`,
+`xUbuntu_25.10`, `xUbuntu_26.04`):
+
+```bash
+distro=Debian_13
+sudo install -d /etc/apt/keyrings
+curl -fsSL "https://download.opensuse.org/repositories/home:/Techneut92:/machine-krb/$distro/Release.key" \
+  | gpg --dearmor | sudo tee /etc/apt/keyrings/machine-krb.gpg >/dev/null
+echo "deb [signed-by=/etc/apt/keyrings/machine-krb.gpg] https://download.opensuse.org/repositories/home:/Techneut92:/machine-krb/$distro/ ./" \
+  | sudo tee /etc/apt/sources.list.d/machine-krb.list
+sudo apt update && sudo apt install machine-krb-service
+sudo systemctl enable --now machine-krb-service.timer
+```
+
 Or from packages — `make packages` (or the GitHub release assets) produces
 **.rpm, .deb and .apk from one fully-static musl binary**:
 
