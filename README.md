@@ -53,6 +53,21 @@ machine-krb-service status                    # is the machine ticket valid?
 sudo machine-krb-service check-join --deep    # prove the join against the KDC
 ```
 
+On Fedora / RHEL (and friends) the easiest path is the
+[COPR repo](https://copr.fedorainfracloud.org/coprs/techneut92/machine-krb/) —
+Fedora 43+/rawhide, EPEL 9/10, x86_64 + aarch64, updates land with `dnf upgrade`:
+
+```bash
+sudo dnf copr enable techneut92/machine-krb
+sudo dnf install machine-krb-service
+sudo systemctl enable --now machine-krb-service.timer
+```
+
+(EL needs `dnf-plugins-core` for `dnf copr`; on Fedora Atomic add the
+[repo file](https://copr.fedorainfracloud.org/coprs/techneut92/machine-krb/)
+to `/etc/yum.repos.d/` and `rpm-ostree install machine-krb-service` — the COPR
+page has copy-paste instructions.)
+
 Or from packages — `make packages` (or the GitHub release assets) produces
 **.rpm, .deb and .apk from one fully-static musl binary**:
 
