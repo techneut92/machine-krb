@@ -11,7 +11,7 @@
 %endif
 
 Name:           machine-krb-service
-Version:        0.1.0
+Version:        0.1.1
 Release:        1%{?dist}
 Summary:        Keep an Active Directory machine-account Kerberos ticket fresh
 
@@ -91,5 +91,8 @@ install -D -m 0644 machine-krb.sysusers %{buildroot}%{_sysusersdir}/machine-krb.
 %{_prefix}/lib/NetworkManager/dispatcher.d/90-machine-krb-service
 
 %changelog
+* Sun Jul 12 2026 Dylan Westra <dylanwestra@gmail.com> - 0.1.1-1
+- Distro packaging and automated publishing (COPR, OBS); no functional changes
+
 * Sun Jul 12 2026 Dylan Westra <dylanwestra@gmail.com> - 0.1.0-1
 - Initial package
