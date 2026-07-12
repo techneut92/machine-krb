@@ -115,6 +115,27 @@ Full details in the crate READMEs:
   tools must exist on the host.
 - Rust ≥ 1.85 to build (floor set by `clap`; the library itself is lower).
 
+## Releasing (maintainers)
+
+Everything ships from git tags; versions must agree before tagging:
+
+- **Library** — bump `crates/machine-krb/Cargo.toml`, tag `lib-vX.Y.Z` →
+  CI publishes to [crates.io](https://crates.io/crates/machine-krb).
+- **Service** — bump `crates/machine-krb-service/Cargo.toml`,
+  `packaging/machine-krb-service.spec` and `debian/changelog`, tag
+  `service-vX.Y.Z` → CI runs the tests, then publishes in one go:
+  - **GitHub release** with the static musl binary + rpm/deb/apk (nfpm),
+  - **[COPR](https://copr.fedorainfracloud.org/coprs/techneut92/machine-krb/)**
+    (Fedora 43+/rawhide, EPEL 9/10) via webhook — rebuilds from git with
+    `.copr/Makefile`,
+  - **[OBS](https://build.opensuse.org/project/show/home:Techneut92:machine-krb)**
+    (Debian 13+, Ubuntu 24.04+) — CI assembles the Debian source package
+    with vendored crates (`packaging/make-obs-debsrc.sh`) and commits it
+    to OBS, which builds and publishes the apt repos.
+
+CI secrets: `CARGO_REGISTRY_TOKEN` (crates.io), `COPR_WEBHOOK_URL`,
+`OBS_USERNAME` + `OBS_PASSWORD`.
+
 ## Support
 
 If this project saves you some time, you can support its development:

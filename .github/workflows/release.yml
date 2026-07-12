@@ -54,3 +54,41 @@ jobs:
     steps:
       - name: trigger COPR SCM rebuild
         run: curl -sSf -X POST "${{ secrets.COPR_WEBHOOK_URL }}" -o /dev/null
+
+  # OBS builds the Debian/Ubuntu apt repos from a source package we assemble
+  # here (vendored crates — OBS builders are offline) and osc-commit to
+  # home:Techneut92:machine-krb. Needs OBS_USERNAME / OBS_PASSWORD secrets.
+  obs:
+    name: OBS upload (Debian/Ubuntu)
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: tag must match debian/changelog
+        run: |
+          tag="${GITHUB_REF_NAME#service-v}"
+          ver="$(dpkg-parsechangelog -SVersion | sed 's/-[0-9][^-]*$//')"
+          if [ "$tag" != "$ver" ]; then
+            echo "tag service-v$tag does not match debian/changelog version $ver — bump debian/changelog" >&2
+            exit 1
+          fi
+      - name: install osc
+        run: sudo apt-get update -q && sudo apt-get install -y -q osc
+      - name: build debian source artifacts
+        run: packaging/make-obs-debsrc.sh dist/obs
+      - name: commit to OBS
+        env:
+          OBS_USERNAME: ${{ secrets.OBS_USERNAME }}
+          OBS_PASSWORD: ${{ secrets.OBS_PASSWORD }}
+        run: |
+          mkdir -p ~/.config/osc
+          printf '[general]\napiurl = https://api.opensuse.org\n\n[https://api.opensuse.org]\nuser = %s\npass = %s\ncredentials_mgr_class = osc.credentials.PlaintextConfigFileCredentialsManager\n' \
+            "$OBS_USERNAME" "$OBS_PASSWORD" > ~/.config/osc/oscrc
+          chmod 600 ~/.config/osc/oscrc
+          osc checkout home:Techneut92:machine-krb machine-krb-service
+          cd home:Techneut92:machine-krb/machine-krb-service
+          rm -f machine-krb-service_*
+          cp "$GITHUB_WORKSPACE"/dist/obs/machine-krb-service_* .
+          osc addremove
+          osc commit -m "machine-krb-service ${GITHUB_REF_NAME#service-v} (automated from $GITHUB_REF_NAME)"
