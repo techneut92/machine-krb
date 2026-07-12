@@ -5,15 +5,17 @@
 # (crates/machine-krb-service) — bump both together.
 
 outdir ?= .
-spec   ?= packaging/machine-krb-service.spec
+# NOT `spec ?=`: COPR passes spec=<checkout DIRECTORY> on the make command
+# line, which would override any makefile default — so use our own name.
+SPECFILE := packaging/machine-krb-service.spec
 
 srpm:
 	dnf -y install cargo git-core rpm-build xz
 	set -e; \
-	VERSION=$$(sed -n 's/^Version:[[:space:]]*//p' $(spec)); \
+	VERSION=$$(sed -n 's/^Version:[[:space:]]*//p' $(SPECFILE)); \
 	TOP=$$(mktemp -d); mkdir -p $$TOP/SOURCES; \
 	git archive --prefix=machine-krb-service-$$VERSION/ \
 	    -o $$TOP/SOURCES/machine-krb-service-$$VERSION.tar.gz HEAD; \
 	cargo vendor --locked vendor >/dev/null; \
 	tar -cJf $$TOP/SOURCES/machine-krb-service-$$VERSION-vendor.tar.xz vendor; \
-	rpmbuild -bs --define "_topdir $$TOP" --define "_srcrpmdir $(outdir)" $(spec)
+	rpmbuild -bs --define "_topdir $$TOP" --define "_srcrpmdir $(outdir)" $(SPECFILE)
