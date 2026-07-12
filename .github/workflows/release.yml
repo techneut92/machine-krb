@@ -43,3 +43,14 @@ jobs:
           gh release create "$GITHUB_REF_NAME" dist/* \
             --title "$GITHUB_REF_NAME" \
             --generate-notes
+
+  # COPR rebuilds from git (make_srpm via .copr/Makefile) for Fedora/EPEL;
+  # the webhook URL is the credential and never expires. Gated on the release
+  # job so a broken tag never publishes. Builds main HEAD — tag on main only.
+  copr:
+    name: COPR builds (Fedora/EPEL)
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: trigger COPR SCM rebuild
+        run: curl -sSf -X POST "${{ secrets.COPR_WEBHOOK_URL }}" -o /dev/null
