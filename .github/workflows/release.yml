@@ -23,19 +23,27 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-unknown-linux-musl
-      - name: install nfpm
+          targets: x86_64-unknown-linux-musl,aarch64-unknown-linux-musl
+      - name: install nfpm + aarch64 linker
         run: |
           curl -sSfLo /tmp/nfpm.deb \
             https://github.com/goreleaser/nfpm/releases/download/v2.47.0/nfpm_2.47.0_amd64.deb
           sudo dpkg -i /tmp/nfpm.deb
+          sudo apt-get update -q && sudo apt-get install -y -q gcc-aarch64-linux-gnu
       - name: tests must pass before anything ships
         run: cargo test --workspace --all-features --locked
-      - run: make packages
-      - name: attach static binary too
+      - name: packages (x86_64)
+        run: make packages
+      - name: packages (aarch64)
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: aarch64-linux-gnu-gcc
+        run: make packages MUSL_TARGET=aarch64-unknown-linux-musl NFPM_ARCH=arm64
+      - name: attach static binaries too
         run: |
           cp target/x86_64-unknown-linux-musl/release/machine-krb-service \
              dist/machine-krb-service-x86_64-linux-musl
+          cp target/aarch64-unknown-linux-musl/release/machine-krb-service \
+             dist/machine-krb-service-aarch64-linux-musl
       - name: create release
         env:
           GH_TOKEN: ${{ github.token }}

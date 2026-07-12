@@ -5,7 +5,8 @@
 # Packages install to /usr/bin and /usr/lib (distro convention); the dev-box
 # `make install` uses /usr/local instead — the two never collide.
 name: machine-krb-service
-arch: amd64
+# amd64 or arm64 — `make packages` exports it (with MUSL_TARGET to match)
+arch: ${ARCH}
 platform: linux
 version: "${VERSION}"
 section: admin
@@ -29,10 +30,14 @@ overrides:
   apk:
     depends:
       - krb5
+  archlinux:
+    depends:
+      - krb5
 
 contents:
-  # the one static binary, same on every distro
-  - src: target/x86_64-unknown-linux-musl/release/machine-krb-service
+  # the one static binary, same on every distro — `make packages` stages it
+  # here from target/<musl triple>/release (nfpm doesn't expand env in src)
+  - src: target/pkg/machine-krb-service
     dst: /usr/bin/machine-krb-service
     file_info:
       mode: 0755
@@ -44,7 +49,7 @@ contents:
     file_info:
       mode: 0644
 
-  # systemd (rpm + deb): unit rewritten to /usr/bin by `make packages`
+  # systemd (rpm + deb + archlinux): unit rewritten to /usr/bin by `make packages`
   - src: target/pkg/machine-krb-service.service
     dst: /usr/lib/systemd/system/machine-krb-service.service
     packager: rpm
@@ -71,6 +76,20 @@ contents:
   - src: systemd/90-machine-krb-service
     dst: /usr/lib/NetworkManager/dispatcher.d/90-machine-krb-service
     packager: deb
+    file_info:
+      mode: 0755
+  - src: target/pkg/machine-krb-service.service
+    dst: /usr/lib/systemd/system/machine-krb-service.service
+    packager: archlinux
+  - src: systemd/machine-krb-service.timer
+    dst: /usr/lib/systemd/system/machine-krb-service.timer
+    packager: archlinux
+  - src: systemd/machine-krb.tmpfiles.conf
+    dst: /usr/lib/tmpfiles.d/machine-krb.conf
+    packager: archlinux
+  - src: systemd/90-machine-krb-service
+    dst: /usr/lib/NetworkManager/dispatcher.d/90-machine-krb-service
+    packager: archlinux
     file_info:
       mode: 0755
 

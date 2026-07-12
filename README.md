@@ -85,13 +85,15 @@ sudo apt update && sudo apt install machine-krb-service
 sudo systemctl enable --now machine-krb-service.timer
 ```
 
-Or from packages — `make packages` (or the GitHub release assets) produces
-**.rpm, .deb and .apk from one fully-static musl binary**:
+Or from packages — `make packages` (or the GitHub release assets, built for
+**x86_64 and aarch64**) produces **.rpm, .deb, .apk and an Arch Linux
+.pkg.tar.zst from one fully-static musl binary**:
 
 ```bash
 sudo dnf install ./machine-krb-service-*.rpm        # Fedora/RHEL
 sudo rpm-ostree install ./machine-krb-service-*.rpm # Fedora Atomic (Silverblue/Kinoite/Bazzite) — then reboot
 sudo apt install ./machine-krb-service_*.deb        # Debian/Ubuntu
+sudo pacman -U ./machine-krb-service-*.pkg.tar.zst  # Arch Linux
 apk add --allow-untrusted machine-krb-service_*.apk # Alpine
 sudo systemctl enable --now machine-krb-service.timer     # (systemd distros)
 ```

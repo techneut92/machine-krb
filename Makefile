@@ -15,7 +15,11 @@ CONFDIR     := $(SYSCONFDIR)/machine-krb
 TARGETDIR   := target
 BIN         := $(TARGETDIR)/release/machine-krb-service
 
-MUSL_TARGET := x86_64-unknown-linux-musl
+# Override the pair together for a cross build, e.g.:
+#   make packages MUSL_TARGET=aarch64-unknown-linux-musl NFPM_ARCH=arm64
+# (needs an aarch64 linker: CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER)
+MUSL_TARGET ?= x86_64-unknown-linux-musl
+NFPM_ARCH   ?= amd64
 VERSION     := $(shell sed -n 's/^version = "\(.*\)"/\1/p' crates/machine-krb-service/Cargo.toml | head -1)
 
 .PHONY: all build test check install uninstall packages bump
@@ -34,8 +38,9 @@ check: test
 	cargo clippy --workspace --all-features --all-targets --locked -- -D warnings
 	cargo fmt --check
 
-# Build .rpm, .deb and .apk into dist/ from one fully-static musl binary
-# (works on glibc and musl distros alike — the crate links no C libraries).
+# Build .rpm, .deb, .apk and Arch .pkg.tar.zst into dist/ from one
+# fully-static musl binary (works on glibc and musl distros alike — the
+# crate links no C libraries).
 # Requires: rustup target add $(MUSL_TARGET); nfpm (https://nfpm.goreleaser.com).
 packages:
 	command -v nfpm >/dev/null || { echo "nfpm not found — install it (e.g. brew install nfpm)" >&2; exit 1; }
@@ -44,9 +49,11 @@ packages:
 	# packaged unit points at /usr/bin (distro layout), not /usr/local/bin
 	mkdir -p target/pkg dist
 	sed 's|ExecStart=/usr/local/bin/|ExecStart=/usr/bin/|' systemd/machine-krb-service.service > target/pkg/machine-krb-service.service
-	VERSION=$(VERSION) nfpm package -f packaging/nfpm.yaml -p rpm -t dist/
-	VERSION=$(VERSION) nfpm package -f packaging/nfpm.yaml -p deb -t dist/
-	VERSION=$(VERSION) nfpm package -f packaging/nfpm.yaml -p apk -t dist/
+	cp target/$(MUSL_TARGET)/release/machine-krb-service target/pkg/machine-krb-service
+	for p in rpm deb apk archlinux; do \
+		VERSION=$(VERSION) ARCH=$(NFPM_ARCH) \
+			nfpm package -f packaging/nfpm.yaml -p $$p -t dist/ || exit 1; \
+	done
 	@echo
 	@ls -lh dist/
 
