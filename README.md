@@ -121,9 +121,10 @@ Everything ships from git tags; versions must agree before tagging:
 
 - **Library** — bump `crates/machine-krb/Cargo.toml`, tag `lib-vX.Y.Z` →
   CI publishes to [crates.io](https://crates.io/crates/machine-krb).
-- **Service** — bump `crates/machine-krb-service/Cargo.toml`,
-  `packaging/machine-krb-service.spec` and `debian/changelog`, tag
-  `service-vX.Y.Z` → CI runs the tests, then publishes in one go:
+- **Service** — `make bump VERSION=X.Y.Z NOTE="what changed"` syncs every
+  version spot (crate, `Cargo.lock`, rpm spec + `%changelog`,
+  `debian/changelog`); review, commit, tag `service-vX.Y.Z` and push →
+  CI runs the tests, then publishes in one go:
   - **GitHub release** with the static musl binary + rpm/deb/apk (nfpm),
   - **[COPR](https://copr.fedorainfracloud.org/coprs/techneut92/machine-krb/)**
     (Fedora 43+/rawhide, EPEL 9/10) via webhook — rebuilds from git with

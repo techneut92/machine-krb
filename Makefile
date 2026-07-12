@@ -18,7 +18,7 @@ BIN         := $(TARGETDIR)/release/machine-krb-service
 MUSL_TARGET := x86_64-unknown-linux-musl
 VERSION     := $(shell sed -n 's/^version = "\(.*\)"/\1/p' crates/machine-krb-service/Cargo.toml | head -1)
 
-.PHONY: all build test check install uninstall packages
+.PHONY: all build test check install uninstall packages bump
 
 all: build
 
@@ -49,6 +49,34 @@ packages:
 	VERSION=$(VERSION) nfpm package -f packaging/nfpm.yaml -p apk -t dist/
 	@echo
 	@ls -lh dist/
+
+# Sync every version spot for a SERVICE release: crate Cargo.toml, Cargo.lock,
+# rpm spec (Version + %changelog) and debian/changelog. Review the diff, commit,
+# tag service-vX.Y.Z and push — CI publishes everywhere (see README, Releasing).
+# The library crate versions independently and is NOT touched here: for a lib
+# release edit crates/machine-krb/Cargo.toml and tag lib-vX.Y.Z.
+# NOTE must not contain '/' or '&' (it travels through sed).
+#   make bump VERSION=0.1.2 NOTE="what changed"
+NOTE ?= New release.
+
+bump:
+	@echo "$(VERSION)" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$$' \
+		|| { echo "usage: make bump VERSION=x.y.z [NOTE=\"what changed\"]" >&2; exit 1; }
+	@set -e; \
+	cur=$$(sed -n 's/^version = "\(.*\)"/\1/p' crates/machine-krb-service/Cargo.toml | head -1); \
+	[ "$$cur" != "$(VERSION)" ] || { echo "already at $(VERSION)" >&2; exit 1; }; \
+	who="$$(git config user.name) <$$(git config user.email)>"; \
+	sed -i "0,/^version = \"$$cur\"/s//version = \"$(VERSION)\"/" crates/machine-krb-service/Cargo.toml; \
+	cargo metadata --offline --format-version 1 >/dev/null; \
+	sed -i "s/^\(Version:[[:space:]]*\)$$cur$$/\1$(VERSION)/" packaging/machine-krb-service.spec; \
+	sed -i "/^%changelog/a * $$(LC_ALL=C date '+%a %b %d %Y') $$who - $(VERSION)-1\n- $(NOTE)\n" packaging/machine-krb-service.spec; \
+	{ printf 'machine-krb-service (%s-1) unstable; urgency=medium\n\n  * %s\n\n -- %s  %s\n\n' \
+		"$(VERSION)" "$(NOTE)" "$$who" "$$(date -R)"; cat debian/changelog; } > debian/changelog.new; \
+	mv debian/changelog.new debian/changelog
+	@git --no-pager diff --stat
+	@echo
+	@echo "next: review the diff, commit, then:"
+	@echo "  git tag service-v$(VERSION) && git push origin main service-v$(VERSION)"
 
 install: build
 	sudo groupadd -rf machine-krb
