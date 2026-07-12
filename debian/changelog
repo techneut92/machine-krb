@@ -1,0 +1,5 @@
+machine-krb-service (0.1.0-1) unstable; urgency=medium
+
+  * Initial release.
+
+ -- Dylan Westra <dylanwestra@gmail.com>  Sun, 12 Jul 2026 13:20:00 +0200

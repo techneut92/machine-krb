@@ -1,0 +1,21 @@
+Source: machine-krb-service
+Section: admin
+Priority: optional
+Maintainer: Dylan Westra <dylanwestra@gmail.com>
+Build-Depends: debhelper-compat (= 13),
+               cargo-1.85 | cargo (>= 1.85),
+               rustc-1.85 | rustc (>= 1.85),
+Standards-Version: 4.7.0
+Homepage: https://github.com/techneut92/machine-krb
+Rules-Requires-Root: no
+
+Package: machine-krb-service
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, krb5-user
+Description: keep an Active Directory machine-account Kerberos ticket fresh
+ Renews (or mints from /etc/krb5.keytab) the machine TGT into
+ /run/machine-krb/armor.ccache so FAST armoring / compound authentication
+ consumers always find a valid, group-readable ticket.
+ .
+ Ships a hardened systemd oneshot service, an hourly + at-boot timer, and
+ a NetworkManager dispatcher hook that refreshes the ticket on connect.

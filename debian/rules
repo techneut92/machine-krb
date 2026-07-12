@@ -1,0 +1,60 @@
+#!/usr/bin/make -f
+# Builds offline from the crates in the orig-vendor component tarball (OBS
+# builders have no network). Overrides dh's buildsystem autodetection
+# throughout — the repo-root Makefile is the dev-box installer, not a
+# package build.
+export CARGO_HOME = $(CURDIR)/debian/cargo_home
+
+# Plain cargo when it meets the crate's 1.85 floor; otherwise the newest
+# versioned Ubuntu toolchain (cargo-1.XX ships no plain `cargo` name, and
+# would invoke the too-old default rustc — hence RUSTC is pinned with it).
+CARGO := $(shell cargo --version 2>/dev/null \
+	| awk 'BEGIN{r=1} {split($$2,v,"."); if (v[1]>1 || v[2]>=85) r=0} END{exit r}' \
+	&& echo cargo \
+	|| ls /usr/bin/cargo-1.* 2>/dev/null | sort -V | tail -n1)
+ifneq ($(CARGO),cargo)
+export RUSTC := $(shell ls /usr/bin/rustc-1.* 2>/dev/null | sort -V | tail -n1)
+export RUSTDOC := $(shell ls /usr/bin/rustdoc-1.* 2>/dev/null | sort -V | tail -n1)
+endif
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	mkdir -p $(CARGO_HOME)
+	printf '[source.crates-io]\nreplace-with = "vendored-sources"\n\n[source.vendored-sources]\ndirectory = "%s/vendor"\n' '$(CURDIR)' \
+		> $(CARGO_HOME)/config.toml
+
+override_dh_auto_build:
+	$(CARGO) build --release --offline --locked -p machine-krb-service
+
+override_dh_auto_test:
+	$(CARGO) test --release --offline --locked --workspace
+
+override_dh_auto_install:
+	install -D -m0755 target/release/machine-krb-service \
+		debian/machine-krb-service/usr/bin/machine-krb-service
+	install -D -m0644 config/config.yaml \
+		debian/machine-krb-service/etc/machine-krb/config.yaml
+	install -d debian/machine-krb-service/usr/lib/systemd/system
+	sed 's|ExecStart=/usr/local/bin/|ExecStart=/usr/bin/|' \
+		systemd/machine-krb-service.service \
+		> debian/machine-krb-service/usr/lib/systemd/system/machine-krb-service.service
+	install -m0644 systemd/machine-krb-service.timer \
+		debian/machine-krb-service/usr/lib/systemd/system/
+	install -D -m0644 systemd/machine-krb.tmpfiles.conf \
+		debian/machine-krb-service/usr/lib/tmpfiles.d/machine-krb.conf
+	install -d debian/machine-krb-service/usr/lib/sysusers.d
+	printf 'g machine-krb -\n' \
+		> debian/machine-krb-service/usr/lib/sysusers.d/machine-krb.conf
+	install -D -m0755 systemd/90-machine-krb-service \
+		debian/machine-krb-service/usr/lib/NetworkManager/dispatcher.d/90-machine-krb-service
+
+# parity with the rpm/nfpm packages: never auto-enable or start; the admin
+# runs `systemctl enable --now machine-krb-service.timer` (stop-on-remove
+# and daemon-reload snippets are still generated)
+override_dh_installsystemd:
+	dh_installsystemd --no-enable --no-start
+
+override_dh_auto_clean:
+	rm -rf target $(CARGO_HOME)
